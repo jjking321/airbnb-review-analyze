@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airbnb Review Analyzer</title>
+    <style>
+        :root {
+            --primary-blue: #007bff;
+            --primary-blue-darker: #0056b3;
+            --white: #ffffff;
+            --off-white-bg: #f8f9fa;
+            --black: #000000;
+            --glass-bg: rgba(235, 240, 250, 0.4);
+            --glass-blur: 8px;
+            --glass-border-color: rgba(0, 0, 0, 0.08);
+            --glass-shadow: 0 6px 24px 0 rgba(0, 0, 0, 0.07);
+            --border-radius: 15px;
+            --error-red: #dc3545;
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--white);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--black);
+            box-sizing: border-box;
+        }
+
+        .glass-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border-radius: var(--border-radius);
+            border: 1px solid var(--glass-border-color);
+            box-shadow: var(--glass-shadow);
+            padding: 30px;
+            width: 100%;
+            max-width: 700px;
+            margin-top: 20px;
+        }
+
+        h1 {
+            color: var(--primary-blue);
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--black);
+            font-weight: 500;
+        }
+
+        textarea {
+            width: calc(100% - 22px); /* Account for padding */
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border-color);
+            background-color: rgba(255, 255, 255, 0.7);
+            color: var(--black);
+            font-family: var(--font-family);
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            background-color: var(--white);
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+
+        .submit-btn {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            background-color: var(--primary-blue-darker);
+            transform: translateY(-2px);
+        }
+
+        .loading-container {
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            padding: 40px 0;
+        }
+        #lottie-animation {
+            width: 100px;
+            height: 100px;
+        }
+        .loading-container p {
+            color: var(--black);
+            margin-left:10px;
+        }
+
+        .results-container {
+            display: none; /* Hidden by default */
+            margin-top: 30px;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid var(--glass-border-color);
+        }
+
+        .result-item h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--primary-blue);
+            font-weight: 500;
+        }
+
+        .confidence-slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        #confidence-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: #e9ecef; /* Light grey track background */
+            outline: none;
+            opacity: 0.9;
+            transition: opacity .2s;
+        }
+
+        #confidence-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-blue); /* Default thumb color, JS will override */
+            cursor: grab;
+            border: 2px solid var(--white);
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+
+        #confidence-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-blue); /* Default thumb color, JS will override */
+            cursor: grab;
+            border: 2px solid var(--white);
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        
+        .score-value {
+            font-weight: bold;
+            min-width: 40px;
+            text-align: right;
+            color: var(--black);
+        }
+
+        #dispute-reason {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: var(--black);
+        }
+
+        .description-area {
+            width: calc(100% - 22px); 
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border-color);
+            background-color: var(--off-white-bg);
+            color: var(--black);
+            font-family: var(--font-family);
+            min-height: 100px;
+            margin-bottom: 10px;
+            white-space: pre-wrap; 
+        }
+
+        .copy-btn {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+            margin-top: 5px;
+        }
+
+        .copy-btn:hover {
+            background-color: var(--primary-blue-darker);
+        }
+
+        #internal-notes {
+            background-color: rgba(0,0,0,0.03);
+            padding: 10px;
+            border-radius: 5px;
+            font-style: italic;
+            font-size: 0.9em;
+            color: #333; /* Slightly lighter black for notes */
+            white-space: pre-wrap;
+        }
+
+        .error-message {
+            display: none; 
+            background-color: var(--error-red);
+            color: var(--white);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Airbnb Review Analyzer</h1>
+
+    <div class="glass-container">
+        <form id="reviewForm">
+            <div class="form-group">
+                <label for="reviewText">Paste your Airbnb Review below:</label>
+                <textarea id="reviewText" name="reviewText" required></textarea>
+            </div>
+            <button type="submit" class="submit-btn">Analyze Review</button>
+        </form>
+
+        <div class="loading-container" id="loadingIndicator">
+            <div id="lottie-animation"></div>
+            <p>Analyzing...</p>
+        </div>
+
+        <div class="error-message" id="errorMessage">
+            Oops! Something went wrong. Please check your review or try again later.
+        </div>
+
+        <div class="results-container" id="resultsDisplay">
+            <div class="result-item">
+                <h3>Confidence Score</h3>
+                <div class="confidence-slider-container">
+                    <input type="range" min="1" max="10" value="5" class="slider" id="confidence-slider" disabled>
+                    <span id="confidence-value" class="score-value">5/10</span>
+                </div>
+            </div>
+
+            <div class="result-item">
+                <h3>Dispute Reason</h3>
+                <p id="dispute-reason">N/A</p>
+            </div>
+
+            <div class="result-item">
+                <h3>Suggested Description</h3>
+                <div id="description" class="description-area">N/A</div>
+                <button id="copyDescriptionBtn" class="copy-btn">Copy Description</button>
+            </div>
+
+            <div class="result-item">
+                <h3>Internal Notes</h3>
+                <p id="internal-notes">N/A</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const reviewForm = document.getElementById('reviewForm');
+            const reviewText = document.getElementById('reviewText');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const lottieAnimationContainer = document.getElementById('lottie-animation');
+            const resultsDisplay = document.getElementById('resultsDisplay');
+            const errorMessage = document.getElementById('errorMessage');
+
+            const confidenceSlider = document.getElementById('confidence-slider');
+            const confidenceValueDisplay = document.getElementById('confidence-value');
+            const disputeReasonDisplay = document.getElementById('dispute-reason');
+            const descriptionDisplay = document.getElementById('description');
+            const copyDescriptionBtn = document.getElementById('copyDescriptionBtn');
+            const internalNotesDisplay = document.getElementById('internal-notes');
+
+            // Initialize Lottie Animation
+            const animation = lottie.loadAnimation({
+                container: lottieAnimationContainer, // Target element
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: 'https://assets9.lottiefiles.com/packages/lf20_aNSiON.json' // Default Lottie animation URL
+            });
+            animation.setSpeed(1.5);
+
+            // Handle Form Submission
+            reviewForm.addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const review = reviewText.value.trim();
+
+                if (!review) {
+                    alert('Please enter a review to analyze.');
+                    return;
+                }
+
+                // Update UI for loading state
+                loadingIndicator.style.display = 'flex';
+                resultsDisplay.style.display = 'none';
+                errorMessage.style.display = 'none';
+                reviewForm.style.display = 'none'; 
+
+                // Define the Netlify function endpoint
+                const API_ENDPOINT = '/.netlify/functions/analyze-review'; 
+
+                try {
+                    // Call the backend Netlify function
+                    const response = await fetch(API_ENDPOINT, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ review_text: review }) 
+                    });
+
+                    if (!response.ok) {
+                        // Try to parse error details from the backend response
+                        const errorData = await response.json().catch(() => ({ message: 'API error and response was not valid JSON' }));
+                        throw new Error(`Error from analysis service: ${response.status} ${response.statusText} - ${errorData.message || 'Failed to retrieve error details'}`);
+                    }
+
+                    const data = await response.json();
+
+                    // Populate results on the page
+                    updateConfidenceScore(data.confidence_score);
+                    disputeReasonDisplay.textContent = data.dispute_reason || 'N/A';
+                    descriptionDisplay.textContent = data.description || 'N/A';
+                    internalNotesDisplay.textContent = data.notes || 'N/A';
+                    
+                    resultsDisplay.style.display = 'block';
+
+                } catch (error) {
+                    console.error('Error during submission or API call:', error);
+                    errorMessage.textContent = `An error occurred: ${error.message}. Please try again.`;
+                    errorMessage.style.display = 'block';
+                } finally {
+                    // Reset UI after loading
+                    loadingIndicator.style.display = 'none';
+                    reviewForm.style.display = 'block'; 
+                    // reviewText.value = ''; // Optionally clear textarea after submission
+                }
+            });
+
+            // Handle Copy Button Click
+            copyDescriptionBtn.addEventListener('click', function () {
+                navigator.clipboard.writeText(descriptionDisplay.textContent)
+                    .then(() => {
+                        copyDescriptionBtn.textContent = 'Copied!';
+                        copyDescriptionBtn.style.backgroundColor = 'var(--primary-blue-darker)';
+                        setTimeout(() => {
+                            copyDescriptionBtn.textContent = 'Copy Description';
+                            copyDescriptionBtn.style.backgroundColor = 'var(--primary-blue)';
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy text: ', err);
+                        alert('Failed to copy text. Please try manually.');
+                    });
+            });
+
+            // Update Confidence Score Slider and Color
+            function updateConfidenceScore(score) {
+                const normalizedScore = Math.max(1, Math.min(10, parseInt(score, 10) || 1));
+                confidenceSlider.value = normalizedScore;
+                confidenceValueDisplay.textContent = `${normalizedScore}/10`;
+
+                let r, g, b; // Variables for RGB color
+                // Calculate color: Red (1) -> Yellow (5) -> Green (10)
+                if (normalizedScore <= 5) { 
+                    r = 255;
+                    g = Math.round(255 * ((normalizedScore - 1) / 4)); // Interpolate green from 0 to 255
+                    b = 0;
+                } else { 
+                    r = Math.round(255 * ((10 - normalizedScore) / 5)); // Interpolate red from 255 to 0
+                    g = 255;
+                    b = 0;
+                }
+                const thumbColor = `rgb(${r},${g},${b})`;
+                
+                // Dynamically update slider thumb color for cross-browser compatibility
+                const styleSheetId = 'dynamic-slider-thumb-styles';
+                let styleSheet = document.getElementById(styleSheetId);
+                if (!styleSheet) {
+                    styleSheet = document.createElement('style');
+                    styleSheet.id = styleSheetId;
+                    document.head.appendChild(styleSheet);
+                }
+                
+                styleSheet.textContent = `
+                    #confidence-slider::-webkit-slider-thumb { background-color: ${thumbColor} !important; }
+                    #confidence-slider::-moz-range-thumb { background-color: ${thumbColor} !important; }
+                `;
+
+                // Update slider track fill color
+                const percentage = ((normalizedScore - 1) / 9) * 100;
+                let fillTrackColor;
+                if (normalizedScore <= 3) fillTrackColor = 'red';
+                else if (normalizedScore <= 7) fillTrackColor = 'yellow';
+                else fillTrackColor = 'limegreen';
+
+                const filledGradient = `linear-gradient(90deg, ${fillTrackColor} ${percentage}%, #e9ecef ${percentage}%)`;
+                confidenceSlider.style.background = filledGradient;
+            }
+        });
+    </script>
+
+</body>
+</html>
