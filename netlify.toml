@@ -1,0 +1,13 @@
+# This file tells Netlify how to build your site and where your functions are.
+# Place this file in the root of your project folder (e.g., review-analyzer-netlify/netlify.toml)
+
+[build]
+  # This is the directory where Netlify will look for your serverless functions.
+  functions = "netlify/functions"
+  # This is the directory that Netlify will publish.
+  # Since your index.html is in the root, we set it to "."
+  publish = "."
+
+[functions]
+  # Specifies the bundler for Node.js functions. esbuild is fast and efficient.
+  node_bundler = "esbuild"
